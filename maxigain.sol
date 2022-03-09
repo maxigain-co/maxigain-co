@@ -1,28 +1,8 @@
 /*
 
-EverRise is built upon the fundamentals of Buyback and increasing the investor's value
-    
-Main features are
-    
-1) 2% tax is collected and distributed to holders for HODLing
-2) 9% buyback and marketing tax is collected and 3% of it is sent for marketing fund and othe 6% is used to buyback the tokens
-    
-4%   is split between hodlers
-2%   to dev wallet
-1%   buy and burn
-2%   LP
-0.5% reward wallet
-1%   maximizer
-
- __        __
-/  \      /  |                                                             
-$$  \     $$ |
-$$$  \   $$$ |
-$$ $$  $$ $$ |
-$$ | $$   $$ |
-$$ |      $$ |
-$$ |      $$ |
-$$/       $$/ 
+ pancakeswap 
+ - mainnet address: 0x10ED43C718714eb63d5aA57B78B54704E256024E
+ - testnet address: 0xD99D1c33F9fC3444f8101754aBC46c52416550D1
 
 */
 
@@ -40,7 +20,6 @@ abstract contract Context {
         return msg.data;
     }
 }
-
 
 interface IERC20 {
 
@@ -433,11 +412,13 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract EverRise is Context, IERC20, Ownable {
+contract TestToken5 is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
     
-    address payable public marketingAddress = payable(0x23F4d6e1072E42e5d25789e3260D19422C2d3674); // Marketing Address
+    address payable public marketingAddress = payable(0x3277d8BB84cc0B13d8385d7C9Bf2cF5b9DCc0631); // Marketing Address
+    address payable public rewardAddress    = payable(0xc3Ad8bED912F524e92a94Fb12d4ea2047C5c9715); // Reward    Address
+    address payable public maximizerAddress = payable(0x1390E8705983C47830E9A6CEc68FAE9d94a4c18C); // Maximizer Address
     address public immutable deadAddress = 0x000000000000000000000000000000000000dEaD;
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
@@ -453,18 +434,20 @@ contract EverRise is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    string private _name = "MaxiGain";
-    string private _symbol = "MXG";
+    string private _name = "TestToken5";
+    string private _symbol = "TTG5";
     uint8 private _decimals = 9;
 
 
-    uint256 public _taxFee = 2;
+    uint256 public _taxFee = 4;
     uint256 private _previousTaxFee = _taxFee;
     
-    uint256 public _liquidityFee = 9;
+    uint256 public _liquidityFee = 2;
     uint256 private _previousLiquidityFee = _liquidityFee;
     
-    uint256 public marketingDivisor = 3;
+    uint256 public marketingDivisor = 2;
+    uint256 public rewardDivisor    = 1; // this should be 0.5
+    uint256 public maximizerDivisor = 1;
     
     uint256 public _maxTxAmount = 3000000 * 10**6 * 10**9;
     uint256 private minimumTokensBeforeSwap = 200000 * 10**6 * 10**9; 
@@ -476,7 +459,6 @@ contract EverRise is Context, IERC20, Ownable {
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = false;
     bool public buyBackEnabled = true;
-
     
     event RewardLiquidityProviders(uint256 tokenAmount);
     event BuyBackEnabledUpdated(bool enabled);
@@ -506,7 +488,9 @@ contract EverRise is Context, IERC20, Ownable {
     constructor () {
         _rOwned[_msgSender()] = _rTotal;
         
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        //Pancakeswap router mainnet - BSC
+        //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
 
@@ -692,7 +676,12 @@ contract EverRise is Context, IERC20, Ownable {
 
         //Send to Marketing address
         transferToAddressETH(marketingAddress, transferredBalance.div(_liquidityFee).mul(marketingDivisor));
-        
+
+        //Send to Reward address
+        transferToAddressETH(rewardAddress, transferredBalance.div(_liquidityFee).mul(rewardDivisor).div(2));
+
+        //Send to Maximizer address
+        transferToAddressETH(maximizerAddress, transferredBalance.div(_liquidityFee).mul(maximizerDivisor));
     }
     
 
@@ -728,7 +717,7 @@ contract EverRise is Context, IERC20, Ownable {
         path[0] = uniswapV2Router.WETH();
         path[1] = address(this);
 
-      // make the swap
+        // make the swap
         uniswapV2Router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: amount}(
             0, // accept any amount of Tokens
             path,
@@ -922,7 +911,7 @@ contract EverRise is Context, IERC20, Ownable {
         minimumTokensBeforeSwap = _minimumTokensBeforeSwap;
     }
     
-     function setBuybackUpperLimit(uint256 buyBackLimit) external onlyOwner() {
+    function setBuybackUpperLimit(uint256 buyBackLimit) external onlyOwner() {
         buyBackUpperLimit = buyBackLimit * 10**18;
     }
 
@@ -949,8 +938,8 @@ contract EverRise is Context, IERC20, Ownable {
     
     function afterPreSale() external onlyOwner {
         setSwapAndLiquifyEnabled(true);
-        _taxFee = 2;
-        _liquidityFee = 9;
+        _taxFee = 4;
+        _liquidityFee = 2;
         _maxTxAmount = 3000000 * 10**6 * 10**9;
     }
     
