@@ -412,7 +412,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract TestToken5 is Context, IERC20, Ownable {
+contract TestToken6 is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
     
@@ -434,8 +434,8 @@ contract TestToken5 is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    string private _name = "TestToken5";
-    string private _symbol = "TTG5";
+    string private _name = "TestToken6";
+    string private _symbol = "TTG6";
     uint8 private _decimals = 9;
 
 
@@ -478,7 +478,12 @@ contract TestToken5 is Context, IERC20, Ownable {
         uint256 amountIn,
         address[] path
     );
-    
+
+    // Laca: added events for debugging
+    event InSwap( uint256 amount );
+    event InBuyBackEnabled( uint256 amount );
+    event InTakeLiquidity( uint256 amount );
+
     modifier lockTheSwap {
         inSwapAndLiquify = true;
         _;
@@ -640,21 +645,36 @@ contract TestToken5 is Context, IERC20, Ownable {
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
         }
 
-        uint256 contractTokenBalance = balanceOf(address(this));
+        // replaced this to owner()
+        uint256 contractTokenBalance = balanceOf(owner());
         bool overMinimumTokenBalance = contractTokenBalance >= minimumTokensBeforeSwap;
         
         if (!inSwapAndLiquify && swapAndLiquifyEnabled && to == uniswapV2Pair) {
             if (overMinimumTokenBalance) {
+                
+                // debug
+                emit InSwap(contractTokenBalance);
+
                 contractTokenBalance = minimumTokensBeforeSwap;
                 swapTokens(contractTokenBalance);    
             }
-	        uint256 balance = address(this).balance;
+            // replaced this to owner()
+	        uint256 balance = address(owner()).balance;
+
+            // this shouldn't be such a big number, 
+            // I think decimals are included and that's: 10**9
             if (buyBackEnabled && balance > uint256(1 * 10**18)) {
                 
+                // debug
+                emit InBuyBackEnabled(balance);
+
                 if (balance > buyBackUpperLimit)
                     balance = buyBackUpperLimit;
                 
                 buyBackTokens(balance.div(100));
+
+                // debug
+                emit InBuyBackEnabled(balance);
             }
         }
         
@@ -847,6 +867,10 @@ contract TestToken5 is Context, IERC20, Ownable {
     function _takeLiquidity(uint256 tLiquidity) private {
         uint256 currentRate =  _getRate();
         uint256 rLiquidity = tLiquidity.mul(currentRate);
+
+        // debug
+        emit InTakeLiquidity(rLiquidity);
+
         _rOwned[address(this)] = _rOwned[address(this)].add(rLiquidity);
         if(_isExcluded[address(this)])
             _tOwned[address(this)] = _tOwned[address(this)].add(tLiquidity);
