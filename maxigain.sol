@@ -412,7 +412,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-contract TestToken5 is Context, IERC20, Ownable {
+contract TestToken6 is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
     
@@ -434,8 +434,8 @@ contract TestToken5 is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    string private _name = "TestToken5";
-    string private _symbol = "TTG5";
+    string private _name = "TestToken6";
+    string private _symbol = "TTG6";
     uint8 private _decimals = 9;
 
 
@@ -478,7 +478,12 @@ contract TestToken5 is Context, IERC20, Ownable {
         uint256 amountIn,
         address[] path
     );
-    
+
+    // Laca: added events for debugging
+    event InSwap( uint256 amount );
+    event InBuyBackEnabled( uint256 amount );
+    event InTakeLiquidity( uint256 amount );
+
     modifier lockTheSwap {
         inSwapAndLiquify = true;
         _;
@@ -498,6 +503,8 @@ contract TestToken5 is Context, IERC20, Ownable {
 
         
         _isExcludedFromFee[owner()] = true;
+
+        // Laca: most probably not needed
         _isExcludedFromFee[address(this)] = true;
         
         emit Transfer(address(0), _msgSender(), _tTotal);
@@ -640,21 +647,36 @@ contract TestToken5 is Context, IERC20, Ownable {
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
         }
 
-        uint256 contractTokenBalance = balanceOf(address(this));
-        bool overMinimumTokenBalance = contractTokenBalance >= minimumTokensBeforeSwap;
+        // replaced this to owner()
+        uint256 ownerTokenBalance = balanceOf(owner());
+        bool overMinimumTokenBalance = ownerTokenBalance >= minimumTokensBeforeSwap;
         
         if (!inSwapAndLiquify && swapAndLiquifyEnabled && to == uniswapV2Pair) {
             if (overMinimumTokenBalance) {
-                contractTokenBalance = minimumTokensBeforeSwap;
-                swapTokens(contractTokenBalance);    
+                
+                // debug
+                emit InSwap(ownerTokenBalance);
+
+                ownerTokenBalance = minimumTokensBeforeSwap;
+                swapTokens(ownerTokenBalance);    
             }
-	        uint256 balance = address(this).balance;
+            // replaced this to owner()
+	        uint256 balance = address(owner()).balance;
+
+            // this shouldn't be such a big number, 
+            // I think decimals are included and that's: 10**9
             if (buyBackEnabled && balance > uint256(1 * 10**18)) {
                 
+                // debug
+                emit InBuyBackEnabled(balance);
+
                 if (balance > buyBackUpperLimit)
                     balance = buyBackUpperLimit;
                 
                 buyBackTokens(balance.div(100));
+
+                // debug
+                emit InBuyBackEnabled(balance);
             }
         }
         
@@ -668,11 +690,11 @@ contract TestToken5 is Context, IERC20, Ownable {
         _tokenTransfer(from,to,amount,takeFee);
     }
 
-    function swapTokens(uint256 contractTokenBalance) private lockTheSwap {
+    function swapTokens(uint256 ownerTokenBalance) private lockTheSwap {
        
-        uint256 initialBalance = address(this).balance;
-        swapTokensForEth(contractTokenBalance);
-        uint256 transferredBalance = address(this).balance.sub(initialBalance);
+        uint256 initialBalance = address(owner()).balance;
+        swapTokensForEth(ownerTokenBalance);
+        uint256 transferredBalance = address(owner()).balance.sub(initialBalance);
 
         //Send to Marketing address
         transferToAddressETH(marketingAddress, transferredBalance.div(_liquidityFee).mul(marketingDivisor));
@@ -697,7 +719,8 @@ contract TestToken5 is Context, IERC20, Ownable {
         path[0] = address(this);
         path[1] = uniswapV2Router.WETH();
 
-        _approve(address(this), address(uniswapV2Router), tokenAmount);
+        // replaced address(this) with owner()
+        _approve(address(owner()), address(uniswapV2Router), tokenAmount);
 
         // make the swap
         uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -730,7 +753,8 @@ contract TestToken5 is Context, IERC20, Ownable {
     
     function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         // approve token transfer to cover all possible scenarios
-        _approve(address(this), address(uniswapV2Router), tokenAmount);
+        // replaced address(this) with owner()
+        _approve(address(owner()), address(uniswapV2Router), tokenAmount);
 
         // add the liquidity
         uniswapV2Router.addLiquidityETH{value: ethAmount}(
@@ -847,9 +871,14 @@ contract TestToken5 is Context, IERC20, Ownable {
     function _takeLiquidity(uint256 tLiquidity) private {
         uint256 currentRate =  _getRate();
         uint256 rLiquidity = tLiquidity.mul(currentRate);
-        _rOwned[address(this)] = _rOwned[address(this)].add(rLiquidity);
-        if(_isExcluded[address(this)])
-            _tOwned[address(this)] = _tOwned[address(this)].add(tLiquidity);
+
+        // debug
+        emit InTakeLiquidity(rLiquidity);
+
+        // replaced address(this) with owner()
+        _rOwned[address(owner())] = _rOwned[address(owner())].add(rLiquidity);
+        if(_isExcluded[address(owner())])
+            _tOwned[address(owner())] = _tOwned[address(owner())].add(tLiquidity);
     }
     
     function calculateTaxFee(uint256 _amount) private view returns (uint256) {
