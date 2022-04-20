@@ -692,7 +692,7 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 }
 
 
-contract TestToken27 is Context, IERC20, Ownable {
+contract TestToken28 is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
 
@@ -715,8 +715,8 @@ contract TestToken27 is Context, IERC20, Ownable {
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    string private _name = "TestToken27";
-    string private _symbol = "TTG27";
+    string private _name = "TestToken28";
+    string private _symbol = "TTG28";
     uint8 private _decimals = 9;
 
     uint256 public _taxFee = 6;
@@ -1039,13 +1039,10 @@ contract TestToken27 is Context, IERC20, Ownable {
             _tOwned[address(this)] = _tOwned[address(this)].add(tLiquidity);
     }
 
-    function _takeOtherFees(uint256 tAmount) private {
-
+    function _takeOtherFees(address sender, uint256 tAmount) private {
         // only try to take fees when they're not 0
-        if ( _taxFee == 0 || inTransferFees )
+        if ( _taxFee == 0 )
           return;
-
-        inTransferFees = true;
 
         (uint256 tBurn, 
          uint256 tDev, 
@@ -1058,18 +1055,18 @@ contract TestToken27 is Context, IERC20, Ownable {
         address rewWallet = 0xc3Ad8bED912F524e92a94Fb12d4ea2047C5c9715;
         address brnWallet = 0x000000000000000000000000000000000000dEaD;
 
-        // shall we subtract this from total amount?
-        transfer( brnWallet, tBurn );
+        // record balance changes
+        _tOwned[devWallet] = _tOwned[devWallet].add(tDev);
+        _tOwned[rewWallet] = _tOwned[rewWallet].add(tRew);
+        _tOwned[brnWallet] = _tOwned[brnWallet].add(tBurn);
 
-        // replace this with maxi wallet
-        //transfer( nftWallet, nftInit );
-        //emit Transfer(address(this), nftWallet, nftInit);
+        // create a maxi wallet && emit the transfer
+        //_tOwned[devWallet] = _tOwned[devWallet].add(tDev);
 
-        transfer( rewWallet, tRew );
+        emit Transfer( sender, devWallet, tDev );
+        emit Transfer( sender, rewWallet, tRew );
+        emit Transfer( sender, brnWallet, tBurn );
 
-        transfer( devWallet, tDev );
-
-        inTransferFees = false;
     }
     
     function calculateTaxFee(uint256 _amount) private view returns (uint256) {
@@ -1096,7 +1093,7 @@ contract TestToken27 is Context, IERC20, Ownable {
 
     function calculateRewFee(uint256 _amount) private view returns (uint256) {
         return _amount.mul(_rewFee).div(
-            50
+            200
         );
     }
 
@@ -1300,8 +1297,8 @@ contract TestToken27 is Context, IERC20, Ownable {
         _rOwned[sender]    = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);   
         _takeLiquidity(tLiquidity);
+        _takeOtherFees(sender, tAmount);
         _reflectFee(rFee, tFee);
-        _takeOtherFees(tAmount);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -1311,8 +1308,8 @@ contract TestToken27 is Context, IERC20, Ownable {
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);           
         _takeLiquidity(tLiquidity);
+        _takeOtherFees(sender, tAmount);
         _reflectFee(rFee, tFee);
-        _takeOtherFees(tAmount);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -1321,8 +1318,8 @@ contract TestToken27 is Context, IERC20, Ownable {
         _rOwned[sender]    = _rOwned[sender].sub(rAmount);              
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
         _takeLiquidity(tLiquidity);
+        _takeOtherFees(sender, tAmount);
         _reflectFee(rFee, tFee);
-        _takeOtherFees(tAmount);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
@@ -1333,8 +1330,8 @@ contract TestToken27 is Context, IERC20, Ownable {
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);        
         _takeLiquidity(tLiquidity);
+        _takeOtherFees(sender, tAmount);
         _reflectFee(rFee, tFee);
-        _takeOtherFees(tAmount);
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
