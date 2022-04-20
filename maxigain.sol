@@ -863,11 +863,8 @@ contract TestToken28 is Context, IERC20, Ownable {
 
         // shall we subtract this from total amount?
         transfer( brnWallet, brnInit );
-
         transfer( nftWallet, nftInit );
-
         transfer( rewWallet, rewInit );
-
         transfer( devWallet, devInit );
 
         //exclude our wallets from rewards (reflection)
@@ -881,7 +878,7 @@ contract TestToken28 is Context, IERC20, Ownable {
         return true;
     }
 
-    function reflectionFromToken(uint256 tAmount, bool deductTransferFee) public returns(uint256) {
+    function reflectionFromToken(uint256 tAmount, bool deductTransferFee) public view returns(uint256) {
         require(tAmount <= _tTotal, "Amount must be less than supply");
         if (!deductTransferFee) {
             (uint256 rAmount,,,,,) = _getValues(tAmount);
@@ -957,27 +954,22 @@ contract TestToken28 is Context, IERC20, Ownable {
         _tFeeTotal = _tFeeTotal.add(tFee);
     }
 
-    function _getValues(uint256 tAmount) private returns (uint256, uint256, uint256, uint256, uint256, uint256) {
+    function _getValues(uint256 tAmount) private view returns (uint256, uint256, uint256, uint256, uint256, uint256) {
         (uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity) = _getTValues(tAmount);
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee)    = _getRValues(tAmount, tFee, tLiquidity, _getRate());
         return (rAmount, rTransferAmount, rFee, tTransferAmount, tFee, tLiquidity);
     }
 
-    function _getOtherFees(uint256 tAmount) private returns (uint256, uint256, uint256, uint256) {
+    function _getOtherFees(uint256 tAmount) private view returns (uint256, uint256, uint256, uint256) {
         uint256 tBurn = calculateBurnFee(tAmount);
         uint256 tDev  = calculateDevFee(tAmount);
         uint256 tRew  = calculateRewFee(tAmount);
         uint256 tMaxi = calculateMaxiFee(tAmount);
 
-        emit DebugUint(tAmount);
-        //emit DebugUint(tDev);
-        //emit DebugUint(tRew);
-        //emit DebugUint(tMaxi);
-
         return (tBurn, tDev, tRew, tMaxi);
     }
 
-    function _getTValues(uint256 tAmount) private returns (uint256, uint256, uint256) {
+    function _getTValues(uint256 tAmount) private view returns (uint256, uint256, uint256) {
         uint256 tFee            = calculateTaxFee(tAmount);
         uint256 tLiquidity      = calculateLiquidityFee(tAmount);
         (uint256 tBurn, 
@@ -992,7 +984,7 @@ contract TestToken28 is Context, IERC20, Ownable {
         return (tTransferAmount, tFee, tLiquidity);
     }
 
-    function _getRValues(uint256 tAmount, uint256 tFee, uint256 tLiquidity, uint256 currentRate) private returns (uint256, uint256, uint256) {
+    function _getRValues(uint256 tAmount, uint256 tFee, uint256 tLiquidity, uint256 currentRate) private view returns (uint256, uint256, uint256) {
         (uint256 tBurn, 
          uint256 tDev, 
          uint256 tRew, 
@@ -1041,32 +1033,26 @@ contract TestToken28 is Context, IERC20, Ownable {
 
     function _takeOtherFees(address sender, uint256 tAmount) private {
         // only try to take fees when they're not 0
-        if ( _taxFee == 0 )
-          return;
+        if ( _taxFee == 0 ) return;
 
-        (uint256 tBurn, 
-         uint256 tDev, 
-         uint256 tRew, 
-         uint256 tMaxi) = _getOtherFees(tAmount);
+        (uint256 tBurn, uint256 tDev, uint256 tRew, uint256 tMaxi) = _getOtherFees(tAmount);
         
         // todo: declare these ones in constructor, so they're available without redeclaring
         address devWallet = 0x3277d8BB84cc0B13d8385d7C9Bf2cF5b9DCc0631;
-        address nftWallet = 0x337cE08aAC91DB168F69Ddaa5790d01404Be0b03;
         address rewWallet = 0xc3Ad8bED912F524e92a94Fb12d4ea2047C5c9715;
         address brnWallet = 0x000000000000000000000000000000000000dEaD;
+        address maxWallet = 0x1390E8705983C47830E9A6CEc68FAE9d94a4c18C;
 
         // record balance changes
         _tOwned[devWallet] = _tOwned[devWallet].add(tDev);
         _tOwned[rewWallet] = _tOwned[rewWallet].add(tRew);
         _tOwned[brnWallet] = _tOwned[brnWallet].add(tBurn);
-
-        // create a maxi wallet && emit the transfer
-        //_tOwned[devWallet] = _tOwned[devWallet].add(tDev);
+        _tOwned[maxWallet] = _tOwned[maxWallet].add(tMaxi);
 
         emit Transfer( sender, devWallet, tDev );
         emit Transfer( sender, rewWallet, tRew );
+        emit Transfer( sender, maxWallet, tMaxi );
         emit Transfer( sender, brnWallet, tBurn );
-
     }
     
     function calculateTaxFee(uint256 _amount) private view returns (uint256) {
@@ -1081,14 +1067,10 @@ contract TestToken28 is Context, IERC20, Ownable {
         );
     }
     
-    function calculateBurnFee(uint256 _amount) private returns (uint256) {
-        emit Debug("burn fee");
-        emit DebugUint(_amount);
-        uint256 multi = _amount.mul(_burnFee);
-        emit DebugUint(multi);
-        uint256 ret   = multi.div(10**2);
-        emit DebugUint(ret);
-        return ret;
+    function calculateBurnFee(uint256 _amount) private view returns (uint256) {
+        return _amount.mul(_burnFee).div(
+            10**2
+        );
     }
 
     function calculateRewFee(uint256 _amount) private view returns (uint256) {
