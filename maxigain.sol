@@ -742,7 +742,7 @@ contract MaxiGain is Context, IERC20, Ownable {
     address private maxWallet = address(this);
 
     string private _name = "MaxiGain";
-    string private _symbol = "MXG03";
+    string private _symbol = "MXG04";
     uint8 private _decimals = 18;
 
     uint256 public _taxFee = 6;
@@ -1037,8 +1037,8 @@ contract MaxiGain is Context, IERC20, Ownable {
 
         uint256 
         rTransferAmount = rAmount.sub(rFee).sub(rLiquidity);
-        rTransferAmount = rAmount.sub(rBurn).sub(rDev);
-        rTransferAmount = rAmount.sub(rRew).sub(rMaxi);
+        rTransferAmount = rTransferAmount.sub(rBurn).sub(rDev);
+        rTransferAmount = rTransferAmount.sub(rRew).sub(rMaxi);
 
         return (rAmount, rTransferAmount, rFee);
     }
