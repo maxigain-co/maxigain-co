@@ -1,18 +1,40 @@
 /**
-  
-   #BEE
-   
-   #LIQ+#RFI+#SHIB+#DOGE = #BEE
-   #SAFEMOON features:
-   3% fee auto add to the liquidity pool to locked forever when selling
-   2% fee auto distribute to all holders
-   I created a black hole so #Bee token will deflate itself in supply with every transaction
-   50% Supply is burned at start.
-   
+
+ ▄▄       ▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄       ▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄▄▄▄▄▄▄▄▄▄  ▄▄        ▄ 
+▐░░▌     ▐░░▌▐░░░░░░░░░░░▌▐░▌     ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░░▌      ▐░▌
+▐░▌░▌   ▐░▐░▌▐░█▀▀▀▀▀▀▀█░▌ ▐░▌   ▐░▌  ▀▀▀▀█░█▀▀▀▀ ▐░█▀▀▀▀▀▀▀▀▀ ▐░█▀▀▀▀▀▀▀█░▌ ▀▀▀▀█░█▀▀▀▀ ▐░▌░▌     ▐░▌
+▐░▌▐░▌ ▐░▌▐░▌▐░▌       ▐░▌  ▐░▌ ▐░▌       ▐░▌     ▐░▌          ▐░▌       ▐░▌     ▐░▌     ▐░▌▐░▌    ▐░▌
+▐░▌ ▐░▐░▌ ▐░▌▐░█▄▄▄▄▄▄▄█░▌   ▐░▐░▌        ▐░▌     ▐░▌ ▄▄▄▄▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌     ▐░▌     ▐░▌ ▐░▌   ▐░▌
+▐░▌  ▐░▌  ▐░▌▐░░░░░░░░░░░▌    ▐░▌         ▐░▌     ▐░▌▐░░░░░░░░▌▐░░░░░░░░░░░▌     ▐░▌     ▐░▌  ▐░▌  ▐░▌
+▐░▌   ▀   ▐░▌▐░█▀▀▀▀▀▀▀█░▌   ▐░▌░▌        ▐░▌     ▐░▌ ▀▀▀▀▀▀█░▌▐░█▀▀▀▀▀▀▀█░▌     ▐░▌     ▐░▌   ▐░▌ ▐░▌
+▐░▌       ▐░▌▐░▌       ▐░▌  ▐░▌ ▐░▌       ▐░▌     ▐░▌       ▐░▌▐░▌       ▐░▌     ▐░▌     ▐░▌    ▐░▌▐░▌
+▐░▌       ▐░▌▐░▌       ▐░▌ ▐░▌   ▐░▌  ▄▄▄▄█░█▄▄▄▄ ▐░█▄▄▄▄▄▄▄█░▌▐░▌       ▐░▌ ▄▄▄▄█░█▄▄▄▄ ▐░▌     ▐░▐░▌
+▐░▌       ▐░▌▐░▌       ▐░▌▐░▌     ▐░▌▐░░░░░░░░░░░▌▐░░░░░░░░░░░▌▐░▌       ▐░▌▐░░░░░░░░░░░▌▐░▌      ▐░░▌
+ ▀         ▀  ▀         ▀  ▀       ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀         ▀  ▀▀▀▀▀▀▀▀▀▀▀  ▀        ▀▀ 
+                                                                       
+  MaxiGain is built upon the fundamentals of Buyback and increasing the investor's value
+    
+  Main features are
+    
+  1) Tax is collected and distributed to holders for HODLing:
+    - 4% when buying
+    - 6% when selling
+
+  2) 6.5% of other fees distributed between
+    - 1% dev / marketing costs
+    - 1% burned automatically
+    - 2% goes to liquidity
+    - 0.5% goes to lottery
+    - 1% is used for buyback
+    
  */
 
-pragma solidity ^0.6.12;
-// SPDX-License-Identifier: Unlicensed
+// SPDX-License-Identifier: MIT
+
+pragma solidity 0.8.13;
+
+error SandwichTradesAreDisallowed();
+
 interface IERC20 {
 
     function totalSupply() external view returns (uint256);
@@ -85,8 +107,6 @@ interface IERC20 {
 
     event DebugUint( uint256 message );
 }
-
-
 
 /**
  * @dev Wrappers over Solidity's arithmetic operations with added overflow
@@ -247,7 +267,7 @@ library SafeMath {
 
 abstract contract Context {
     function _msgSender() internal view virtual returns (address payable) {
-        return msg.sender;
+        return payable(msg.sender);
     }
 
     function _msgData() internal view virtual returns (bytes memory) {
@@ -255,7 +275,6 @@ abstract contract Context {
         return msg.data;
     }
 }
-
 
 /**
  * @dev Collection of functions related to the address type
@@ -417,7 +436,7 @@ contract Ownable is Context {
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    constructor () internal {
+    constructor () {
         address msgSender = _msgSender();
         _owner = msgSender;
         emit OwnershipTransferred(address(0), msgSender);
@@ -468,21 +487,21 @@ contract Ownable is Context {
     function lock(uint256 time) public virtual onlyOwner {
         _previousOwner = _owner;
         _owner = address(0);
-        _lockTime = now + time;
+        _lockTime = block.timestamp + time;
         emit OwnershipTransferred(_owner, address(0));
     }
     
     //Unlocks the contract for owner when _lockTime is exceeds
     function unlock() public virtual {
         require(_previousOwner == msg.sender, "You don't have permission to unlock");
-        require(now > _lockTime , "Contract is locked until 7 days");
+        require(block.timestamp > _lockTime , "Contract is locked until 7 days");
         emit OwnershipTransferred(_owner, _previousOwner);
         _owner = _previousOwner;
     }
 }
 
 // pragma solidity >=0.5.0;
-
+// creates the pair the inner contract 
 interface IUniswapV2Factory {
     event PairCreated(address indexed token0, address indexed token1, address pair, uint);
 
@@ -500,7 +519,6 @@ interface IUniswapV2Factory {
 }
 
 // pragma solidity >=0.5.0;
-
 interface IUniswapV2Pair {
     event Approval(address indexed owner, address indexed spender, uint value);
     event Transfer(address indexed from, address indexed to, uint value);
@@ -553,7 +571,7 @@ interface IUniswapV2Pair {
 }
 
 // pragma solidity >=0.6.2;
-
+// returns with the addresses
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);
     function WETH() external pure returns (address);
@@ -649,7 +667,6 @@ interface IUniswapV2Router01 {
 }
 
 // pragma solidity >=0.6.2;
-
 interface IUniswapV2Router02 is IUniswapV2Router01 {
     function removeLiquidityETHSupportingFeeOnTransferTokens(
         address token,
@@ -691,14 +708,17 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
     ) external;
 }
 
-
-contract TestToken28 is Context, IERC20, Ownable {
+contract MaxiGain is Context, IERC20, Ownable {
     using SafeMath for uint256;
     using Address for address;
 
     mapping (address => uint256) private _rOwned;
     mapping (address => uint256) private _tOwned;
     mapping (address => mapping (address => uint256)) private _allowances;
+
+    // Tracking for protections against sandwich trades
+    // and rogue LP pairs
+    mapping (address => uint256) private _lastTrade;
 
     // addresses excluded from tax
     mapping (address => bool) private _isExcludedFromFee;
@@ -710,14 +730,20 @@ contract TestToken28 is Context, IERC20, Ownable {
     // ~~ 10^^77
     uint256 private constant MAX = ~uint256(0);
 
-    // 1 quadrillion with 9 decimal points
-    uint256 private _tTotal = 1000000000 * 10**6 * 10**9;
+    // 1 billion with 18 decimal points
+    uint256 private _tTotal = 1_000_000_000 * 10**18;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
-    string private _name = "TestToken28";
-    string private _symbol = "TTG28";
-    uint8 private _decimals = 9;
+    address private nftWallet = 0x337cE08aAC91DB168F69Ddaa5790d01404Be0b03;
+    address private brnWallet = 0x000000000000000000000000000000000000dEaD;
+    address private devWallet = 0x3277d8BB84cc0B13d8385d7C9Bf2cF5b9DCc0631;
+    address private rewWallet = 0xc3Ad8bED912F524e92a94Fb12d4ea2047C5c9715;
+    address private maxWallet = address(this);
+
+    string private _name = "MaxiGain";
+    string private _symbol = "MXG03";
+    uint8 private _decimals = 18;
 
     uint256 public _taxFee = 6;
     uint256 private _previousTaxFee = _taxFee;
@@ -742,20 +768,31 @@ contract TestToken28 is Context, IERC20, Ownable {
     address public immutable uniswapV2Pair;
     
     bool inSwapAndLiquify;
-    bool inTransferFees = false;
-    bool public swapAndLiquifyEnabled = true;
-    bool private initWasCalled = false;
+    bool public swapAndLiquifyEnabled = false;
+    bool public buyBackEnabled        = false;
+    bool private initWasCalled        = false;
     
-    uint256 public _maxTxAmount = 5000000 * 10**6 * 10**9;
-    uint256 private numTokensSellToAddToLiquidity = 500000 * 10**6 * 10**9;
+    uint96 internal _minimumTokensBeforeSwap = uint96(5 * 10**6 * 10**18);
+    uint256 internal buyBackUpperLimit = 10 * 10**18;
+    uint256 internal _buyBackTriggerTokenLimit = 1 * 10**6 * 10**18;
+    uint256 internal _buyBackMinAvailability = 1 * 10**18; //1 BNB
+
+    uint256 internal _nextBuybackAmount;
+    uint256 internal _latestBuybackBlock;
+    uint256 internal _numberOfBlocks = 1000;
+    uint256 internal _minBuybackAmount = 1 * 10**18 / (10**1);
+    uint256 internal _maxBuybackAmount = 1 * 10**18;
+
+    uint256 public _maxTxAmount = 5_000_000 * 10**18;
+    uint256 private numTokensSellToAddToLiquidity = 500_000 * 10**18;
     
+    event BuyBackTriggered();
+    event BuyBackEnabledUpdated(bool enabled);
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
-    event SwapAndLiquify(
-        uint256 tokensSwapped,
-        uint256 ethReceived,
-        uint256 tokensIntoLiqudity
-    );
+    event SwapAndLiquify(uint256 tokensSwapped, uint256 ethReceived, uint256 tokensIntoLiqudity);
+    event SwapETHForTokens(uint256 amountIn, address[] path);
+    event SwapTokensForETH(uint256 amountIn, address[] path);
 
     modifier lockTheSwap {
         inSwapAndLiquify = true;
@@ -763,7 +800,7 @@ contract TestToken28 is Context, IERC20, Ownable {
         inSwapAndLiquify = false;
     }
     
-    constructor () public {
+    constructor () {
 
         _rOwned[_msgSender()] = _rTotal;
         
@@ -850,16 +887,11 @@ contract TestToken28 is Context, IERC20, Ownable {
 
     function initWallets() public onlyOwner returns(bool) {
         require(initWasCalled == false, "initWallets can only be called once");
-
-        address devWallet = 0x3277d8BB84cc0B13d8385d7C9Bf2cF5b9DCc0631;
-        address nftWallet = 0x337cE08aAC91DB168F69Ddaa5790d01404Be0b03;
-        address rewWallet = 0xc3Ad8bED912F524e92a94Fb12d4ea2047C5c9715;
-        address brnWallet = 0x000000000000000000000000000000000000dEaD;
     
-        uint256 devInit =  10000000 * 10**6 * 10**9; //  10 trillion
-        uint256 rewInit =  10000000 * 10**6 * 10**9; //  10 trillion
-        uint256 brnInit =  90000000 * 10**6 * 10**9; //  90 trillion
-        uint256 nftInit = 300000000 * 10**6 * 10**9; // 300 trillion
+        uint256 devInit =  10_000_000 * 10**18; //  10 million
+        uint256 rewInit =  10_000_000 * 10**18; //  10 million
+        uint256 brnInit =  90_000_000 * 10**18; //  90 million
+        uint256 nftInit = 300_000_000 * 10**18; // 300 million
 
         // shall we subtract this from total amount?
         transfer( brnWallet, brnInit );
@@ -867,12 +899,17 @@ contract TestToken28 is Context, IERC20, Ownable {
         transfer( rewWallet, rewInit );
         transfer( devWallet, devInit );
 
+        //update the burned amount in the total
+        //_tTotal = _tTotal.sub(brnInit);
+
         //exclude our wallets from rewards (reflection)
         excludeFromReward(devWallet);
         excludeFromReward(rewWallet);
         excludeFromReward(brnWallet);
         excludeFromReward(nftWallet);
+        excludeFromReward(maxWallet);
 
+        // should we set this true right after the require, in order to avoid reentrancy issues?
         initWasCalled = true;
 
         return true;
@@ -946,7 +983,7 @@ contract TestToken28 is Context, IERC20, Ownable {
         emit SwapAndLiquifyEnabledUpdated(_enabled);
     }
     
-     //to recieve ETH from uniswapV2Router when swaping
+     //to receive ETH from uniswapV2Router when swapping
     receive() external payable {}
 
     function _reflectFee(uint256 rFee, uint256 tFee) private {
@@ -1036,18 +1073,15 @@ contract TestToken28 is Context, IERC20, Ownable {
         if ( _taxFee == 0 ) return;
 
         (uint256 tBurn, uint256 tDev, uint256 tRew, uint256 tMaxi) = _getOtherFees(tAmount);
-        
-        // todo: declare these ones in constructor, so they're available without redeclaring
-        address devWallet = 0x3277d8BB84cc0B13d8385d7C9Bf2cF5b9DCc0631;
-        address rewWallet = 0xc3Ad8bED912F524e92a94Fb12d4ea2047C5c9715;
-        address brnWallet = 0x000000000000000000000000000000000000dEaD;
-        address maxWallet = 0x1390E8705983C47830E9A6CEc68FAE9d94a4c18C;
 
         // record balance changes
         _tOwned[devWallet] = _tOwned[devWallet].add(tDev);
         _tOwned[rewWallet] = _tOwned[rewWallet].add(tRew);
         _tOwned[brnWallet] = _tOwned[brnWallet].add(tBurn);
         _tOwned[maxWallet] = _tOwned[maxWallet].add(tMaxi);
+
+        //update the burned amount in the total
+        //_tTotal = _tTotal.sub(tBurn);
 
         emit Transfer( sender, devWallet, tDev );
         emit Transfer( sender, rewWallet, tRew );
@@ -1073,6 +1107,8 @@ contract TestToken28 is Context, IERC20, Ownable {
         );
     }
 
+    // reward should be 0.5%, however solidity does not support floating numbers,
+    // so half the result by division double
     function calculateRewFee(uint256 _amount) private view returns (uint256) {
         return _amount.mul(_rewFee).div(
             200
@@ -1143,6 +1179,11 @@ contract TestToken28 is Context, IERC20, Ownable {
         if(from != owner() && to != owner())
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
 
+        address pair = uniswapV2Pair;
+        bool isSell = to == pair;
+        bool isBuy = from == pair;
+        bool isIgnoredAddress = _isExcludedFromFee[from] || _isExcludedFromFee[to];
+
         uint256 contractTokenBalance = balanceOf(address(this));
     
         if(contractTokenBalance >= _maxTxAmount)
@@ -1156,21 +1197,31 @@ contract TestToken28 is Context, IERC20, Ownable {
         // also, don't swap & liquify if sender is uniswap pair.
         bool overMinTokenBalance = contractTokenBalance >= numTokensSellToAddToLiquidity;
         if (
-            overMinTokenBalance &&
             !inSwapAndLiquify &&
-            from != uniswapV2Pair &&
+            from != pair &&
             swapAndLiquifyEnabled
         ) {
-            contractTokenBalance = numTokensSellToAddToLiquidity;
-            //add liquidity
-            swapAndLiquify(contractTokenBalance);
+            if (overMinTokenBalance){
+                contractTokenBalance = numTokensSellToAddToLiquidity;
+                //add liquidity
+                swapAndLiquify(contractTokenBalance);
+            }
+
+            uint256 balance = address(this).balance;
+            if (buyBackEnabled && balance > uint256(1 * 10**18)) {
+                
+                if (balance > buyBackUpperLimit)
+                    balance = buyBackUpperLimit;
+                
+                buyBackTokens(balance.div(100));
+            }
         }
-        
-        if ( to == uniswapV2Pair ){
+
+        if ( isSell ){
             this.setTaxFeePercent(6);
             emit Debug("selling MXG tokens");
         } 
-        else if ( from == uniswapV2Pair ){
+        else if ( isBuy ){
             this.setTaxFeePercent(4);
             emit Debug("buying MXG tokens");
         }
@@ -1179,15 +1230,35 @@ contract TestToken28 is Context, IERC20, Ownable {
         bool takeFee = true;
         
         //if any account belongs to _isExcludedFromFee account then remove the fee
-        if(_isExcludedFromFee[from] || _isExcludedFromFee[to]){
+        if(isIgnoredAddress){
             takeFee = false;
         }
         
         //transfer amount, it will take tax, burn, liquidity fee
         _tokenTransfer(from,to,amount,takeFee);
+    }
 
-        // debug emit
-        emit Debug("_transfer was called");
+    function buyBackTokens(uint256 amount) private lockTheSwap {
+    	if (amount > 0) {
+    	    swapETHForTokens(amount);
+	    }
+    }
+
+    function swapETHForTokens(uint256 amount) private {
+        // generate the uniswap pair path of token -> weth
+        address[] memory path = new address[](2);
+        path[0] = uniswapV2Router.WETH();
+        path[1] = address(this);
+
+        // make the swap
+        uniswapV2Router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: amount}(
+            0, // accept any amount of Tokens
+            path,
+            brnWallet, // Burn address
+            block.timestamp.add(300)
+        );
+        
+        emit SwapETHForTokens(amount, path);
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
@@ -1315,6 +1386,25 @@ contract TestToken28 is Context, IERC20, Ownable {
         _takeOtherFees(sender, tAmount);
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
+    }
+
+    function setBuyBackEnabled(bool _enabled) public onlyOwner {
+        buyBackEnabled = _enabled;
+        emit BuyBackEnabledUpdated(_enabled);
+    }
+
+    function prepareForPreSale() external onlyOwner {
+        setSwapAndLiquifyEnabled(false);
+        setBuyBackEnabled(false);
+        removeAllFee();
+        _maxTxAmount = 500_000_000 * 10**18;
+    }
+    
+    function afterPreSale() external onlyOwner {
+        setSwapAndLiquifyEnabled(true);
+        setBuyBackEnabled(true);
+        restoreAllFee();
+        _maxTxAmount = 3_000_000 * 10**18;
     }
 
 }
