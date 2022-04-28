@@ -745,7 +745,7 @@ contract MaxiGain is Context, IERC20, Ownable {
     address private deployWallet;
 
     string private _name = "MaxiGain";
-    string private _symbol = "MXG07";
+    string private _symbol = "MXG08";
     uint8 private _decimals = 18;
 
     uint256 public _taxFee = 6;
@@ -810,10 +810,14 @@ contract MaxiGain is Context, IERC20, Ownable {
         //mainnet
         //0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F
         // pancakswap address that does NOT work on pancakeswap
-        // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+
+        // dxsale router address
+        // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x8D5c42DDdcDc3982561404845C2c5fe801EA8379);
         
         // working pancakeswap address on bsc testnet:
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
+
         // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
@@ -898,7 +902,7 @@ contract MaxiGain is Context, IERC20, Ownable {
 
         uint256 devInit =  10_000_000 * 10**18; //  10 million
         uint256 rewInit =  10_000_000 * 10**18; //  10 million
-        uint256 brnInit =  90_000_000 * 10**18; //  90 million
+        uint256 brnInit =  68_000_000 * 10**18; //  90 million
         uint256 nftInit = 300_000_000 * 10**18; // 300 million
 
         // shall we subtract this from total amount?
@@ -926,7 +930,7 @@ contract MaxiGain is Context, IERC20, Ownable {
         excludeFromReward(brnWallet);
         excludeFromReward(nftWallet);
         excludeFromReward(maxWallet);
-        excludeFromReward(deployWallet);
+        // excludeFromReward(deployWallet);
 
         return true;
     }
@@ -1196,7 +1200,7 @@ contract MaxiGain is Context, IERC20, Ownable {
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
 
         address pair = uniswapV2Pair;
-        bool isSell = to == pair || ( _afterPresale && (to != pair && from != pair));
+        bool isSell = to == pair; // || ( _afterPresale && (to != pair && from != pair)));
         bool isBuy = from == pair;
         bool isIgnoredAddress = _isExcludedFromFee[from] || _isExcludedFromFee[to];
 
@@ -1233,11 +1237,11 @@ contract MaxiGain is Context, IERC20, Ownable {
             }
         }
 
-        if ( isSell && _afterPresale ){
+        if ( isSell ){
             this.setTaxFeePercent(6);
             emit Debug("selling MXG tokens");
         } 
-        else if ( isBuy && _afterPresale ){
+        else if ( isBuy ){
             this.setTaxFeePercent(4);
             emit Debug("buying MXG tokens");
         }
@@ -1413,7 +1417,7 @@ contract MaxiGain is Context, IERC20, Ownable {
         setSwapAndLiquifyEnabled(false);
         setBuyBackEnabled(false);
         removeAllFee();
-        _maxTxAmount = 500_000_000 * 10**18;
+        _maxTxAmount = 650_000_000 * 10**18;
         emit DebugPrepareForPresale( _taxFee );
         emit DebugPrepareForPresale( _devFee );
     }
