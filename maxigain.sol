@@ -893,16 +893,29 @@ contract MaxiGain is Context, IERC20, Ownable {
     function initWallets() public onlyOwner returns(bool) {
         require(initWasCalled == false, "initWallets can only be called once");
     
+        // should we set this true right after the require, in order to avoid reentrancy issues?
+        initWasCalled = true;
+
         uint256 devInit =  10_000_000 * 10**18; //  10 million
         uint256 rewInit =  10_000_000 * 10**18; //  10 million
         uint256 brnInit =  90_000_000 * 10**18; //  90 million
         uint256 nftInit = 300_000_000 * 10**18; // 300 million
 
         // shall we subtract this from total amount?
-        transfer( brnWallet, brnInit );
-        transfer( nftWallet, nftInit );
-        transfer( rewWallet, rewInit );
-        transfer( devWallet, devInit );
+        //transfer( brnWallet, brnInit );
+        //transfer( nftWallet, nftInit );
+        //transfer( rewWallet, rewInit );
+        //transfer( devWallet, devInit );
+
+        _tOwned[devWallet] = devInit;
+        _tOwned[rewWallet] = rewInit;
+        _tOwned[brnWallet] = brnInit;
+        _tOwned[nftWallet] = nftInit;
+
+        emit Transfer( deployWallet, devWallet, devInit );
+        emit Transfer( deployWallet, rewWallet, rewInit );
+        emit Transfer( deployWallet, nftWallet, nftInit );
+        emit Transfer( deployWallet, brnWallet, brnInit );
 
         //update the burned amount in the total
         //_tTotal = _tTotal.sub(brnInit);
@@ -914,9 +927,6 @@ contract MaxiGain is Context, IERC20, Ownable {
         excludeFromReward(nftWallet);
         excludeFromReward(maxWallet);
         excludeFromReward(deployWallet);
-
-        // should we set this true right after the require, in order to avoid reentrancy issues?
-        initWasCalled = true;
 
         return true;
     }
@@ -1223,11 +1233,11 @@ contract MaxiGain is Context, IERC20, Ownable {
             }
         }
 
-        if ( isSell ){
+        if ( isSell && _afterPresale ){
             this.setTaxFeePercent(6);
             emit Debug("selling MXG tokens");
         } 
-        else if ( isBuy ){
+        else if ( isBuy && _afterPresale ){
             this.setTaxFeePercent(4);
             emit Debug("buying MXG tokens");
         }
@@ -1346,7 +1356,7 @@ contract MaxiGain is Context, IERC20, Ownable {
             _transferStandard(sender, recipient, amount);
         }
         
-        if(!takeFee)
+        if(!takeFee && _afterPresale)
             restoreAllFee();
     }
 
