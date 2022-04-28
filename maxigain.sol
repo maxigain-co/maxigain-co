@@ -106,6 +106,8 @@ interface IERC20 {
     event Debug( string message );
 
     event DebugUint( uint256 message );
+
+    event DebugPrepareForPresale( uint256 message );
 }
 
 /**
@@ -740,9 +742,10 @@ contract MaxiGain is Context, IERC20, Ownable {
     address private devWallet = 0x3277d8BB84cc0B13d8385d7C9Bf2cF5b9DCc0631;
     address private rewWallet = 0xc3Ad8bED912F524e92a94Fb12d4ea2047C5c9715;
     address private maxWallet = address(this);
+    address private deployWallet;
 
     string private _name = "MaxiGain";
-    string private _symbol = "MXG04";
+    string private _symbol = "MXG07";
     uint8 private _decimals = 18;
 
     uint256 public _taxFee = 6;
@@ -771,8 +774,8 @@ contract MaxiGain is Context, IERC20, Ownable {
     bool public swapAndLiquifyEnabled = false;
     bool public buyBackEnabled        = false;
     bool private initWasCalled        = false;
+    bool private _afterPresale        = false;
     
-    uint96 internal _minimumTokensBeforeSwap = uint96(5 * 10**6 * 10**18);
     uint256 internal buyBackUpperLimit = 10 * 10**18;
     uint256 internal _buyBackTriggerTokenLimit = 1 * 10**6 * 10**18;
     uint256 internal _buyBackMinAvailability = 1 * 10**18; //1 BNB
@@ -807,17 +810,19 @@ contract MaxiGain is Context, IERC20, Ownable {
         //mainnet
         //0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F
         // pancakswap address that does NOT work on pancakeswap
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
+        // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
         
         // working pancakeswap address on bsc testnet:
-        //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
         // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
 
         // set the rest of the contract variables
         uniswapV2Router = _uniswapV2Router;
-        
+
+        deployWallet = owner();
+
         //exclude owner and this contract from fee
         _isExcludedFromFee[owner()] = true;
         _isExcludedFromFee[address(this)] = true;
@@ -908,6 +913,7 @@ contract MaxiGain is Context, IERC20, Ownable {
         excludeFromReward(brnWallet);
         excludeFromReward(nftWallet);
         excludeFromReward(maxWallet);
+        excludeFromReward(deployWallet);
 
         // should we set this true right after the require, in order to avoid reentrancy issues?
         initWasCalled = true;
@@ -1070,7 +1076,7 @@ contract MaxiGain is Context, IERC20, Ownable {
 
     function _takeOtherFees(address sender, uint256 tAmount) private {
         // only try to take fees when they're not 0
-        if ( _taxFee == 0 ) return;
+        if (_burnFee == 0 || _devFee == 0 || _rewFee  == 0 || _maxiFee == 0) return;
 
         (uint256 tBurn, uint256 tDev, uint256 tRew, uint256 tMaxi) = _getOtherFees(tAmount);
 
@@ -1180,7 +1186,7 @@ contract MaxiGain is Context, IERC20, Ownable {
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
 
         address pair = uniswapV2Pair;
-        bool isSell = to == pair;
+        bool isSell = to == pair || ( _afterPresale && (to != pair && from != pair));
         bool isBuy = from == pair;
         bool isIgnoredAddress = _isExcludedFromFee[from] || _isExcludedFromFee[to];
 
@@ -1398,12 +1404,15 @@ contract MaxiGain is Context, IERC20, Ownable {
         setBuyBackEnabled(false);
         removeAllFee();
         _maxTxAmount = 500_000_000 * 10**18;
+        emit DebugPrepareForPresale( _taxFee );
+        emit DebugPrepareForPresale( _devFee );
     }
     
     function afterPreSale() external onlyOwner {
         setSwapAndLiquifyEnabled(true);
         setBuyBackEnabled(true);
         restoreAllFee();
+        _afterPresale = true;
         _maxTxAmount = 3_000_000 * 10**18;
     }
 
