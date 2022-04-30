@@ -813,7 +813,7 @@ contract MaxiGain is Context, IERC20, Ownable {
         //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
 
         // dxsale router address
-        // IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x8D5c42DDdcDc3982561404845C2c5fe801EA8379);
+        //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x8D5c42DDdcDc3982561404845C2c5fe801EA8379);
         
         // working pancakeswap address on bsc testnet:
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
@@ -902,7 +902,7 @@ contract MaxiGain is Context, IERC20, Ownable {
 
         uint256 devInit =  10_000_000 * 10**18; //  10 million
         uint256 rewInit =  10_000_000 * 10**18; //  10 million
-        uint256 brnInit =  68_000_000 * 10**18; //  90 million
+        uint256 brnInit =  68_000_000 * 10**18; //  68 million
         uint256 nftInit = 300_000_000 * 10**18; // 300 million
 
         // shall we subtract this from total amount?
