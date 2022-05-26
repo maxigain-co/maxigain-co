@@ -807,8 +807,6 @@ contract MaxiGain is Context, IERC20, Ownable {
 
         _rOwned[_msgSender()] = _rTotal;
         
-        //mainnet
-        //0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F
         // pancakswap address that does NOT work on pancakeswap
         //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xD99D1c33F9fC3444f8101754aBC46c52416550D1);
 
@@ -816,7 +814,9 @@ contract MaxiGain is Context, IERC20, Ownable {
         //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x8D5c42DDdcDc3982561404845C2c5fe801EA8379);
         
         // working pancakeswap address on bsc testnet:
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
+        //IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3);
+
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
 
         // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
@@ -825,11 +825,11 @@ contract MaxiGain is Context, IERC20, Ownable {
         // set the rest of the contract variables
         uniswapV2Router = _uniswapV2Router;
 
-        deployWallet = owner();
+        //deployWallet = owner();
 
         //exclude owner and this contract from fee
-        _isExcludedFromFee[owner()] = true;
-        _isExcludedFromFee[address(this)] = true;
+        //_isExcludedFromFee[owner()] = true;
+        //_isExcludedFromFee[address(this)] = true;
 
         // emit the initial token assignment
         emit Transfer(address(0), _msgSender(), _tTotal);
