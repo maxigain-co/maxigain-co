@@ -18,8 +18,11 @@ module.exports = {
       host: '127.0.0.1', // Localhost (default: none)
       port: 7545, // Standard Ethereum port (default: none)
       network_id: '*', // Any network (default: none)
-      gas: 4712388,
+      //gas: 47123880,
+      gas: 6721975,
       gasPrice: 100000000000,
+      //gas: 0xfffffffffff, // <-- Use this high gas value
+      //gasPrice: 0x01,
     },
   bsc_testnet: {
       provider: () =>
@@ -54,6 +57,12 @@ module.exports = {
   compilers: {
     solc: {
       version: '0.8.13', // Fetch exact version from solc-bin (default: truffle's version)
+        settings: {
+        optimizer: {
+            enabled: true,
+            runs: 200 
+        }
+      }
     },
   },
 };
